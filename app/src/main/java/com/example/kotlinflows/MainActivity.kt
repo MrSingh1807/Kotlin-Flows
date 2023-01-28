@@ -19,27 +19,38 @@ class MainActivity : AppCompatActivity() {
             /********  Cold Flows   *******/
 
             CoroutineScope(Dispatchers.Main).launch {
-                /*    Some Events , Which we can handle */
-                // we can manually emit values for conditions
-                producer()
-                    .onStart {
-                        emit( -1)
-                        binding.flowDataTV.append("Consumer Start Receiving ")
-                    }
-                    .onCompletion {
-                        emit( 10)
-                        binding.flowDataTV.append("Consumer Completed  his receiving")
-                    }
-                    .onEach {
-                        binding.flowDataTV.append("Consumer $it Received ")
-                    }
-                    .onEmpty {
-                        binding.flowDataTV.append("Data is Empty ")
-                    }
-                    .collect {
+                /******    Flow Operators  *****/
+
+                /*****
+                Terminal Operator --> These operators start the flows
+                Non Terminal Operator --> These operators, plays with data
+                 *****/
+
+                val result = producer()
+                result.apply {
+                    // Terminal Operator ; Some Common Operators
+                    toList()  // First Consume all data & then update
+                    first()
+                    collect {
                         Log.d(TAG, "Consumer -> $it \n  ")
                         binding.flowDataTV.append("Consumer -> $it \n  ")
                     }
+                }
+
+                result.apply {
+                    // Non Terminal Operator; Some Common Operators
+                    map {
+                        // Convert My data
+                        it * 2
+                    }
+                    filter {
+                        it < 8
+                    }
+                    /***** We need a terminal Operator for start flows
+                    bcz Non terminal Operator can n't start the flow *****/
+                    collect()
+                }
+
             }
         }
     }
