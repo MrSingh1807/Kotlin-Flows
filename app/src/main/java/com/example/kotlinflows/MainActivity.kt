@@ -20,11 +20,14 @@ class MainActivity : AppCompatActivity() {
 
             CoroutineScope(Dispatchers.Main).launch {
                 /*    Some Events , Which we can handle */
+                // we can manually emit values for conditions
                 producer()
                     .onStart {
+                        emit( -1)
                         binding.flowDataTV.append("Consumer Start Receiving ")
                     }
                     .onCompletion {
+                        emit( 10)
                         binding.flowDataTV.append("Consumer Completed  his receiving")
                     }
                     .onEach {
