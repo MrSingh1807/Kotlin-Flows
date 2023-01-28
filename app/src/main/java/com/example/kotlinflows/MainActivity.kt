@@ -29,13 +29,24 @@ class MainActivity : AppCompatActivity() {
                 DummyData().getNotes().apply {
                     // Non Terminal Operator
                     map {
-                        FormattedNote(it.isActive, it.title.toUpperCase(), it.description.toUpperCase())
+                        FormattedNote(
+                            it.isActive,
+                            it.title.toUpperCase(),
+                            it.description.toUpperCase()
+                        )
                     }
                     filter {
                         it.isActive
                     }
-                    collect{
-                        binding.startFlowBTN.append(" $it \n ")
+                    collect {
+                        /*
+                        Case -- Producing time is low & Consuming time is high
+                            here, consumer is slow & producing is fast
+                             ie; we add buffering
+                         */
+                        buffer(3) // pass that value of data that you want to buffer
+                        delay(1500)  // Consuming time
+                        binding.flowDataTV.append(" Title -> ${it.title}, Description -> ${it.description} \n ")
                     }
                 }
 
