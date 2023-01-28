@@ -5,9 +5,7 @@ import android.os.Bundle
 import android.util.Log
 import com.example.kotlinflows.databinding.ActivityMainBinding
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.*
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
@@ -20,31 +18,27 @@ class MainActivity : AppCompatActivity() {
         binding.startFlowBTN.setOnClickListener {
             /********  Cold Flows   *******/
 
-            /*       ******  Multiple Consumers  *******
-            In Cold Streams --> all consumers are independent; ie -> all consumer receive data in Start
-                no matter when they start to receive data
-             */
             CoroutineScope(Dispatchers.Main).launch {
-            val data: Flow<Int> = producer()
-            data.collect {
-                // ie: Consumer 1; Here we collect data,
-                Log.d(TAG, "Consumer 1 -> $it \n  ")
-                binding.flowDataTV.append("Consumer 1 -> $it \n  ")
+                /*    Some Events , Which we can handle */
+                producer()
+                    .onStart {
+                        binding.flowDataTV.append("Consumer Start Receiving ")
+                    }
+                    .onCompletion {
+                        binding.flowDataTV.append("Consumer Completed  his receiving")
+                    }
+                    .onEach {
+                        binding.flowDataTV.append("Consumer $it Received ")
+                    }
+                    .onEmpty {
+                        binding.flowDataTV.append("Data is Empty ")
+                    }
+                    .collect {
+                        Log.d(TAG, "Consumer -> $it \n  ")
+                        binding.flowDataTV.append("Consumer -> $it \n  ")
+                    }
             }
         }
-            CoroutineScope(Dispatchers.Main).launch {
-                val data: Flow<Int> = producer()
-                data.collect {
-                    // ie: Consumer 2 ; Here we collect data,
-
-                    delay(2000)  // Consumer 2; is slow to receive data
-                    Log.d(TAG, "Consumer 2 -> $it \n ")
-                    binding.flowDataTV.append("Consumer 2 -> $it \n  ")
-                }
-            }
-
-        }
-
     }
 
 
@@ -55,10 +49,8 @@ class MainActivity : AppCompatActivity() {
         list.forEach {
             delay(1000)
             emit(it)
-
             // Here, Producer produce the for collector
         }
-
 
     }
 }
