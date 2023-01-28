@@ -18,7 +18,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.startFlowBTN.setOnClickListener {
-            CoroutineScope(Dispatchers.Main).launch {
+            val job = CoroutineScope(Dispatchers.Main).launch {
                 val data: Flow<Int> = producer()
                 /*
                 Flows by default are Cold, until consumer not present
@@ -31,6 +31,14 @@ class MainActivity : AppCompatActivity() {
                     binding.flowDataTV.append( "$it \n  ")
                 }
             }
+             /*
+             if you wanna stop the flow, simply remove the consumer flow automatically closed
+              */
+           GlobalScope.launch {
+               // We cancel our Job(coroutine) for stop flow
+               delay(5000)
+               job.cancel()
+           }
         }
 
     }
