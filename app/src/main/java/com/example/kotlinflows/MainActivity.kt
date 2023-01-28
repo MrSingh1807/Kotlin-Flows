@@ -18,27 +18,31 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.startFlowBTN.setOnClickListener {
-            val job = CoroutineScope(Dispatchers.Main).launch {
+            /********  Cold Flows   *******/
+
+            /*       ******  Multiple Consumers  *******
+            In Cold Streams --> all consumers are independent; ie -> all consumer receive data in Start
+                no matter when they start to receive data
+             */
+            CoroutineScope(Dispatchers.Main).launch {
+            val data: Flow<Int> = producer()
+            data.collect {
+                // ie: Consumer 1; Here we collect data,
+                Log.d(TAG, "Consumer 1 -> $it \n  ")
+                binding.flowDataTV.append("Consumer 1 -> $it \n  ")
+            }
+        }
+            CoroutineScope(Dispatchers.Main).launch {
                 val data: Flow<Int> = producer()
-                /*
-                Flows by default are Cold, until consumer not present
-                 */
-
                 data.collect {
-                    // ie: Consumer; Here we collect data,
-                    Log.d(TAG, "$it , ->  ")
+                    // ie: Consumer 2 ; Here we collect data,
 
-                    binding.flowDataTV.append( "$it \n  ")
+                    delay(2000)  // Consumer 2; is slow to receive data
+                    Log.d(TAG, "Consumer 2 -> $it \n ")
+                    binding.flowDataTV.append("Consumer 2 -> $it \n  ")
                 }
             }
-             /*
-             if you wanna stop the flow, simply remove the consumer flow automatically closed
-              */
-           GlobalScope.launch {
-               // We cancel our Job(coroutine) for stop flow
-               delay(5000)
-               job.cancel()
-           }
+
         }
 
     }
