@@ -23,7 +23,7 @@ class MainActivity : AppCompatActivity() {
             In Hot Streams --> all consumers are not independent; ie -> all consumer receive same data
                 no matter when they start to receive data
 
-                After flow started;  If anyOne start to receive data, it missed the previous data
+             After flow started;  If anyOne start to receive data, it missed the previous data
                  */
 
             GlobalScope.launch(Dispatchers.Main) {
@@ -47,7 +47,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun producer(): Flow<Int> {   // You can also return -> MutableSharedFlow / SharedFlow / Flow
-        val mutableSharedFlow = MutableSharedFlow<Int>()
+        val mutableSharedFlow = MutableSharedFlow<Int>(replay = 1)
+        // replay --> same as buffer(); scenario -> may be producer is slow or late
         GlobalScope.launch {
             val list = listOf(1, 2, 3, 4, 5, 6, 7, 8)
             list.forEach { value ->
