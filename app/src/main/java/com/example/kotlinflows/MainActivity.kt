@@ -27,6 +27,9 @@ class MainActivity : AppCompatActivity() {
                 There are two Specific point where error can be occur;
                        either -> producing data
                        or -> collecting data
+
+                     => You can Segregate  errors
+                     => You can use multiple catches as flowOn
                  */
 
                 try {
@@ -34,12 +37,11 @@ class MainActivity : AppCompatActivity() {
                         .collect {
                             Log.d(TAG, "Consumer " + Thread.currentThread().name) // Main Thread
                             binding.flowDataTV.append("Consumer -> $it \n ")
-//                            throw Exception("Error in Collector")
+                            throw Exception("Error in Consumer")
                         }
 
-                } catch (e: Exception){
-                    // You can easily handel the both errors in one try catch
-                    Log.d(TAG, e.message.toString())
+                } catch (e: Exception) {
+                    Log.d(TAG, "Producers ->  " + e.message.toString())
                 }
             }
         }
@@ -53,5 +55,11 @@ class MainActivity : AppCompatActivity() {
             emit(it)
             throw Exception("Error in Producer")
         }
+    }.catch {
+        // here, you receive all producer's errors
+        // Additional Benefit - you can pass additional callback elements (emit something) according yourself
+
+        Log.d(TAG, "Producer -> ${it.message}")
+        emit(-1)  // add addition callback
     }
 }
