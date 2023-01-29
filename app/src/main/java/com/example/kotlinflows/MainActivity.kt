@@ -26,17 +26,25 @@ class MainActivity : AppCompatActivity() {
                      they assume that emit() & collect() are in same context
                 Producer always produce your data on that context in which context you consume data
 
-                 Case -> I want to produce data in IO thread & consume it in Main Thread ; Use FlowON
+                 Case -> I want to produce data in IO thread & consume it in Main Thread ;
+                    Use FlowON ; in multiple flowOn: flowOn always work upstreams,
+                                 code b/w ABC to XYZ flowOn is run in XYZ flowOn 
                  */
 
                 producer()
                     .map {
-                        Log.d(TAG, "Consumer " + Thread.currentThread().name) // IO thread
+                        Log.d(TAG, "Consumer map " + Thread.currentThread().name) // Default thread
                         it * 2
                     }
-                    .flowOn(Dispatchers.IO)   // Before this, all code run in passed Thread Pools
+                    .buffer(2)
+                    .flowOn(Dispatchers.Unconfined)  // Before this or b/w last to this flowOn; all code run in passed Thread Pools
+                    .filter {
+                        Log.d(TAG, "Consumer filter " + Thread.currentThread().name) // IO thread
+                        it <= 10
+                    }
+                    .flowOn(Dispatchers.IO)   // Before this or b/w last to this flowOn; all code run in passed Thread Pools
                     .collect {
-                        Log.d(TAG, "Consumer " + Thread.currentThread().name) // Main
+                        Log.d(TAG, "Consumer " + Thread.currentThread().name) // Main Thread
                         binding.flowDataTV.append("Consumer -> $it \n ")
                     }
 
