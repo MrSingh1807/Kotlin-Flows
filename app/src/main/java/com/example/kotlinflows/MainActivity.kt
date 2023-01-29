@@ -17,48 +17,47 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.startFlowBTN.setOnClickListener {
-            /********  Shared Flow ( Hot Flow )  *******/
+            /********  State Flow ( Hot Flow )  *******/
 
             /*
             In Hot Streams --> all consumers are not independent; ie -> all consumer receive same data
                 no matter when they start to receive data
 
              After flow started;  If anyOne start to receive data, it missed the previous data
+
+             Shared Flow --> not maintain state
+             State Flow --> maintain his state; latest (last) value maintain as a state
+                    like a single buffer
                  */
 
             GlobalScope.launch(Dispatchers.Main) {
                 val consumer = producer()
+                delay(5000)
+                /*
+                consumer was added after 5 second but data produced completely in 4 seconds .
+                   in Shared Flow case -> consume didn't receive any data
+                   but in State Flow case  -> State Flow maintain his state, so consumer get the last value
+                 */
                 consumer.collect {
-                    Log.d(TAG, "Consumer 1, Item - $it " + Thread.currentThread().name) // Main Thread
-                    binding.flowDataTV.append("Consumer 1 -> $it \n ")
-                }
-            }
-
-            GlobalScope.launch(Dispatchers.Main){
-                val consumer = producer()
-                delay(2500)
-                consumer.collect {
-                    Log.d(TAG, "Consumer 2, Item - $it " + Thread.currentThread().name) // Main Thread
-                    binding.flowDataTV.append("Consumer 2 -> $it \n ")
-
+                    Log.d(TAG, "Consumer, Item - $it " + Thread.currentThread().name) // Main Thread
+                    binding.flowDataTV.append("Consumer -> $it \n ")
                 }
             }
         }
     }
 
     private fun producer(): Flow<Int> {   // You can also return -> MutableSharedFlow / SharedFlow / Flow
-        val mutableSharedFlow = MutableSharedFlow<Int>(replay = 1)
+        val mutableStatedFlow = MutableStateFlow(0)
         // replay --> same as buffer(); scenario -> may be producer is slow or late
         GlobalScope.launch {
-            val list = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+            val list = listOf(1, 2, 3, 4)
             list.forEach { value ->
-                mutableSharedFlow.apply {
+                mutableStatedFlow.apply {
                     delay(1000)
-                    Log.d(TAG, "Producer " + Thread.currentThread().name)
                     emit(value)
                 }
             }
         }
-        return mutableSharedFlow
+        return mutableStatedFlow
     }
 }
