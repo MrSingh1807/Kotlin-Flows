@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun producer(): Flow<Int> {   // You can also return -> MutableSharedFlow / SharedFlow / Flow
+    private fun producer(): Flow<Int> {   // You can also return -> MutableStateFlow / StateFlow / Flow
         val mutableStatedFlow = MutableStateFlow(0)
         // replay --> same as buffer(); scenario -> may be producer is slow or late
         GlobalScope.launch {
