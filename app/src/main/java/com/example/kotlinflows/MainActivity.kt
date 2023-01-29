@@ -38,15 +38,26 @@ class MainActivity : AppCompatActivity() {
                    in Shared Flow case -> consume didn't receive any data
                    but in State Flow case  -> State Flow maintain his state, so consumer get the last value
                  */
-                consumer.collect {
-                    Log.d(TAG, "Consumer, Item - $it " + Thread.currentThread().name) // Main Thread
-                    binding.flowDataTV.append("Consumer -> $it \n ")
+                consumer.apply {
+                    Log.d(TAG, "Consumer, Item - $value " + Thread.currentThread().name) // Main Thread
+                    binding.flowDataTV.append("Consumer -> $value \n ")
+                    // Consumer can access producer value
                 }
             }
+
+            /*****   LiveData VS StateFlow  *****/
+            /*
+            In Live Data  -->  All operators executes on Main Thread
+                              ex; Map, filter etc
+                             LifeCycle Aware
+
+            In State Flow  -->   We can use flowOn property;
+                                need coroutines scopes
+             */
         }
     }
 
-    private fun producer(): Flow<Int> {   // You can also return -> MutableStateFlow / StateFlow / Flow
+    private fun producer(): StateFlow<Int> {   // You can also return -> MutableStateFlow / StateFlow / Flow
         val mutableStatedFlow = MutableStateFlow(0)
         // replay --> same as buffer(); scenario -> may be producer is slow or late
         GlobalScope.launch {
