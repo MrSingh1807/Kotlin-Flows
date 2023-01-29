@@ -4,62 +4,60 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import com.example.kotlinflows.databinding.ActivityMainBinding
-import com.example.kotlinflows.model.FormattedNote
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
-import java.lang.Exception
 
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private val TAG = "MyTaG"
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         binding.startFlowBTN.setOnClickListener {
-            /********  Cold Flows   *******/
+            /********  Shared Flow ( Hot Flow )  *******/
 
-            CoroutineScope(Dispatchers.Main).launch {
-                /******    Exception Handling  *****/
+            /*
+            In Hot Streams --> all consumers are not independent; ie -> all consumer receive same data
+                no matter when they start to receive data
 
-                /*
-                There are two Specific point where error can be occur;
-                       either -> producing data
-                       or -> collecting data
-
-                     => You can Segregate  errors
-                     => You can use multiple catches as flowOn
+                After flow started;  If anyOne start to receive data, it missed the previous data
                  */
 
-                try {
-                    producer()
-                        .collect {
-                            Log.d(TAG, "Consumer " + Thread.currentThread().name) // Main Thread
-                            binding.flowDataTV.append("Consumer -> $it \n ")
-                            throw Exception("Error in Consumer")
-                        }
+            GlobalScope.launch(Dispatchers.Main) {
+                val consumer = producer()
+                consumer.collect {
+                    Log.d(TAG, "Consumer 1, Item - $it " + Thread.currentThread().name) // Main Thread
+                    binding.flowDataTV.append("Consumer 1 -> $it \n ")
+                }
+            }
 
-                } catch (e: Exception) {
-                    Log.d(TAG, "Producers ->  " + e.message.toString())
+            GlobalScope.launch(Dispatchers.Main){
+                val consumer = producer()
+                delay(2500)
+                consumer.collect {
+                    Log.d(TAG, "Consumer 2, Item - $it " + Thread.currentThread().name) // Main Thread
+                    binding.flowDataTV.append("Consumer 2 -> $it \n ")
+
                 }
             }
         }
     }
 
-    private fun producer() = flow {
-        val list = listOf(1, 2, 3, 4, 5, 6, 7, 8)
-        list.forEach {
-            delay(1000)
-            Log.d(TAG, "Producer " + Thread.currentThread().name)
-            emit(it)
-            throw Exception("Error in Producer")
+    private fun producer(): Flow<Int> {
+        val mutableSharedFlow = MutableSharedFlow<Int>()
+        GlobalScope.launch {
+            val list = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+            list.forEach { value ->
+                mutableSharedFlow.apply {
+                    delay(1000)
+                    Log.d(TAG, "Producer " + Thread.currentThread().name)
+                    emit(value)
+                }
+            }
         }
-    }.catch {
-        // here, you receive all producer's errors
-        // Additional Benefit - you can pass additional callback elements (emit something) according yourself
-
-        Log.d(TAG, "Producer -> ${it.message}")
-        emit(-1)  // add addition callback
+        return mutableSharedFlow
     }
 }
