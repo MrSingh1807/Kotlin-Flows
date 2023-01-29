@@ -20,37 +20,36 @@ class MainActivity : AppCompatActivity() {
             /********  Cold Flows   *******/
 
             CoroutineScope(Dispatchers.Main).launch {
-                /******    Flow Operators  *****/
+                /******    Context Preservation ( Flow On )  *****/
 
-                /*****
-                Terminal Operator --> These operators start the flows
-                Non Terminal Operator --> These operators, plays with data
-                 *****/
-                DummyData().getNotes().apply {
-                    // Non Terminal Operator
-                    map {
-                        FormattedNote(
-                            it.isActive,
-                            it.title.toUpperCase(),
-                            it.description.toUpperCase()
-                        )
+                /* Flow Always preserve his context,
+                     they assume that emit() & collect() are in same context
+                Producer always produce your data on that context in which context you consume data
+
+                 Case -> I want to produce data in IO thread & consume it in Main Thread ; Use FlowON
+                 */
+
+                producer()
+                    .map {
+                        Log.d(TAG, "Consumer " + Thread.currentThread().name) // IO thread
+                        it * 2
                     }
-                    filter {
-                        it.isActive
+                    .flowOn(Dispatchers.IO)   // Before this, all code run in passed Thread Pools
+                    .collect {
+                        Log.d(TAG, "Consumer " + Thread.currentThread().name) // Main
+                        binding.flowDataTV.append("Consumer -> $it \n ")
                     }
-                    collect {
-                        /*
-                        Case -- Producing time is low & Consuming time is high
-                            here, consumer is slow & producing is fast
-                             ie; we add buffering
-                         */
-                        buffer(3) // pass that value of data that you want to buffer
-                        delay(1500)  // Consuming time
-                        binding.flowDataTV.append(" Title -> ${it.title}, Description -> ${it.description} \n ")
-                    }
-                }
 
             }
         }
+    }
+
+    private fun producer() = flow {
+            val list = listOf(1, 2, 3, 4, 5, 6, 7, 8)
+            list.forEach {
+                delay(1000)
+                Log.d(TAG, "Producer " + Thread.currentThread().name)
+                emit(it)
+            }
     }
 }
